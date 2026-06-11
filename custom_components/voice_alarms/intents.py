@@ -36,16 +36,13 @@ class CreateAlarmHandler(intent.IntentHandler):
 
     @property
     def slot_schema(self) -> vol.Schema:
-        return vol.Schema(
-            {
+        return vol.Schema({
                 vol.Required("time"): cv.string,
                 vol.Optional("reoccurring"): cv.string,
                 vol.Optional("name"): cv.string,
                 vol.Optional("alarm_name"): cv.string,
                 vol.Optional("custom_alarm_name"): cv.string,
-            },
-            extra=vol.ALLOW_EXTRA,
-        )
+        }, extra=vol.ALLOW_EXTRA)
 
     async def async_handle(self, user_intent: intent.Intent) -> intent.IntentResponse:
         hass = user_intent.hass
@@ -54,7 +51,6 @@ class CreateAlarmHandler(intent.IntentHandler):
         calling_device = user_intent.device_id if user_intent.device_id else ""
 
         raw_time_str = str(slots.get("time", {}).get("value", "")).lower().strip()
-        
         for word in ["every", "at", "for"]:
             raw_time_str = raw_time_str.replace(word, "").strip()
 
@@ -98,7 +94,6 @@ class CreateAlarmHandler(intent.IntentHandler):
                 break
         
         final_name = raw_name if raw_name else allocated_idx
-
         db[allocated_idx] = {
             "name": final_name,
             "time": raw_time,
@@ -115,7 +110,8 @@ class CreateAlarmHandler(intent.IntentHandler):
         
         list_sensor = hass.data[DOMAIN].get("list_sensor")
         if list_sensor:
-            await list_sensor.async_update_state()
+            # FIXED: async_update_ha_state is the standard method for entities
+            await list_sensor.async_update_ha_state()
         
         response = user_intent.create_response()
         response.async_set_speech(f"Alarm {final_name} created for {raw_time} ({reoccurring}).")
@@ -129,19 +125,27 @@ class CancelAlarmHandler(intent.IntentHandler):
 
     async def async_handle(self, user_intent: intent.Intent) -> intent.IntentResponse:
         hass = user_intent.hass
-        db = hass.data[DOMAIN]["alarms"]
-        switches = hass.data[DOMAIN]["switches"]
+        db = hass.data[DOMAIN].get("alarms", {})
+        switches = hass.data[DOMAIN].get("switches", {})
         master_sensor = hass.data[DOMAIN].get("master_sensor")
+        any_changed = False
         
         for idx, alarm in db.items():
             if alarm.get("ringing"):
                 alarm["ringing"] = False
                 alarm["enabled"] = False
+                any_changed = True
                 if idx in switches:
+                    # Ensure we are calling the method correctly
                     switches[idx].async_write_ha_state()
         
-        if master_sensor:
-            master_sensor.update_state()
+        if any_changed:
+            from . import save_alarms_to_disk
+            await hass.async_add_executor_job(save_alarms_to_disk, hass)
+            
+            if master_sensor:
+                # master_sensor likely needs the async version
+                await master_sensor.async_update_ha_state()
         
         response = user_intent.create_response()
         response.async_set_speech("Alarm canceled.")
@@ -195,11 +199,11 @@ class DeleteAlarmHandler(intent.IntentHandler):
         
         list_sensor = hass.data[DOMAIN].get("list_sensor")
         if list_sensor:
-            await list_sensor.async_update_state()
+            # FIXED: Use async_update_ha_state
+            await list_sensor.async_update_ha_state()
         
         response.async_set_speech("Deleted")
         return response
-
 
 class ListAlarmsHandler(intent.IntentHandler):
     """Handles listing scheduled alarms, excluding disabled ones and adding reoccurrence info."""
@@ -236,7 +240,6 @@ class ListAlarmsHandler(intent.IntentHandler):
         response.async_set_speech("" + ". ".join(alarm_summaries) + ".")
         return response
 
-
 class DeleteAllAlarmsHandler(intent.IntentHandler):
     """Handles deleting all active alarms."""
     def __init__(self):
@@ -259,7 +262,8 @@ class DeleteAllAlarmsHandler(intent.IntentHandler):
         
         list_sensor = hass.data[DOMAIN].get("list_sensor")
         if list_sensor:
-            await list_sensor.async_update_state()
+            # FIXED: Use async_update_ha_state
+            await list_sensor.async_update_ha_state()
             
         response = user_intent.create_response()
         response.async_set_speech("All alarms deleted.")
