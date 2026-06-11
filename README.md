@@ -42,7 +42,7 @@ This sensor turns **ON** when an alarm triggers.
 ## Setup Instructions
 
 ### 1. Installation
-Install via **HACS** as a "Custom Repository" (`https://github.com/lone-baggie/voice-alarms`), or manually copy the `custom_components/voice_alarms` directory into your `/config/custom_components/` directory and restart.
+Install via **HACS** as a "Custom Repository" (`https://github.com/lone-baggie/voice_alarms`), or manually copy the `custom_components/voice_alarms` directory into your `/config/custom_components/` directory and restart.
 
 ### 2. Custom Sentences
 This integration requires a custom intent file to process your speech:
