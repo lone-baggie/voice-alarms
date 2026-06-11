@@ -1,0 +1,81 @@
+language: "en"
+
+lists:
+  time:
+    wildcard: true
+  alarm_name:
+    wildcard: true
+
+  reoccurring:
+    values:
+      - "monday"
+      - "mondays"
+      - "every monday"
+      - "tuesday"
+      - "tuesdays"
+      - "every tuesday"
+      - "wednesday"
+      - "wednesdays"
+      - "every wednesday"
+      - "thursday"
+      - "thursdays"
+      - "every thursday"
+      - "friday"
+      - "fridays"
+      - "every friday"
+      - "saturday"
+      - "saturdays"
+      - "every saturday"
+      - "sunday"
+      - "sundays"
+      - "every sunday"
+      - "weekday"
+      - "weekdays"
+      - "every weekday"
+      - "everyday"
+      - "every day"
+      - "daily"
+
+intents:
+  CreateAlarmIntent:
+    data:
+      - sentences:
+          - "(create|set|schedule) [an] alarm [called|named] {alarm_name} (at|for) {time} {reoccurring}"
+          - "(create|set|schedule) [an] alarm [called|named] {alarm_name} (at|for) {time}"
+          - "(create|set|schedule) {alarm_name} alarm (at|for) {time} {reoccurring}"
+          - "(create|set|schedule) {alarm_name} alarm (at|for) {time}"
+          - "(create|set|schedule) [an] alarm (at|for) {time} {reoccurring}"
+          - "(create|set|schedule) [an] alarm (at|for) {time}"
+        slots:
+          reoccurring: "once"
+
+  ListAlarmsIntent:
+    data:
+      - sentences:
+          - "list [active] alarms"
+          - "what alarms [are] set"
+          - "show me my alarms"
+
+  CancelAlarmIntent:
+    data:
+      - sentences:
+          - "cancel alarm"
+          - "cancel [the] alarm"
+          - "cancel [the] ringing alarm"
+          - "silence alarm"
+          - "silence [the] alarm"
+          - "silence [the] ringing alarm"
+          - "stop alarm"
+
+  DeleteAlarmIntent:
+    data:
+      - sentences:
+          - "delete [the|an] alarm {alarm_name}"
+          - "delete [the|an] alarm (at|for) {time}"
+
+
+  DeleteAllAlarmsIntent:
+    data:
+      - sentences:
+          - "delete all alarms"
+          - "clear all alarms"

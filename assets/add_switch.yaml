@@ -1,0 +1,10 @@
+
+# ==========================================
+# ADD Switch
+# ==========================================
+
+switch:
+  - id: !extend timer_ringing
+    name: "Alarm"
+    internal: false
+

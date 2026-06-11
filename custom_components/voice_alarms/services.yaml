@@ -1,0 +1,52 @@
+create_alarm:
+  name: Create Alarm
+  description: Create new alarm.
+  fields:
+    time:
+      name: Alarm Time
+      description: Alarm time (e.g., "07:30", "14:20").
+      required: true
+      example: "07:15"
+    name:
+      name: Friendly Custom Name
+      description: Alarm name.
+      required: false
+      example: "Wake up morning"
+    reoccurring:
+      name: Recurrence Strategy
+      description: Alarm frequency (e.g., "once", "monday", "weekday", "everyday").
+      required: false
+      default: "once"
+      example: "weekday"
+    device_id:
+      name: Target Device ID
+      description: The 32-character unique device registry ID.
+      required: false
+      example: "7c126dfbb6b9df2372d80d19597241ca"
+
+cancel_alarm:
+  name: Cancel/Silence Ringing Alarms
+  description: Cancel Alarm ringer.
+
+delete_alarm:
+  name: Delete Single Alarm
+  description: Delete Alarm.
+  fields:
+    name:
+      name: Identifier String Matcher
+      description: Alarm name.
+      required: false
+      example: "Wake up morning"
+    time:
+      name: Timestamp Matcher
+      description: Time.
+      required: false
+      example: "07:15"
+
+list_alarms:
+  name: List Scheduled Alarms
+  description: List Alarms.
+
+delete_all_alarms:
+  name: Delete All Alarms
+  description: Delete all Alarms.

@@ -1,0 +1,28 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Voice Alarms Setup",
+        "description": "Configure your Voice Alarms settings.",
+        "data": {
+          "name": "Alarm Name"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Failed to connect to voice engine."
+    },
+    "abort": {
+      "already_configured": "This integration is already configured."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "data": {
+          "volume": "Alarm Volume"
+        }
+      }
+    }
+  }
+}

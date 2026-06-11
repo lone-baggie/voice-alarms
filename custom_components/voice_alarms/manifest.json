@@ -1,0 +1,14 @@
+{
+  "domain": "voice_alarms",
+  "name": "Voice Alarms",
+  "codeowners": ["@lone-baggie"],
+  "dependencies": ["intent", "switch", "binary_sensor", "sensor"],
+  "integration_type": "entity",
+  "config_flow": true,
+  "documentation": "https://github.com/lone-baggie/voice-alarms",
+  "issue_tracker": "https://github.com/lone-baggie/voice-alarms/issues",
+  "iot_class": "local_polling",
+  "requirements": [],
+  "version": "1.0.0",
+  "services": "services.yaml"
+}
