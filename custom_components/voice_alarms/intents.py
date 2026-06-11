@@ -4,7 +4,7 @@ import voluptuous as vol
 
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import intent, config_validation as cv
-
+from .helpers import async_cancel_alarm_logic
 from .const import DOMAIN
 from .switch import async_register_new_switch
 
@@ -92,13 +92,13 @@ class CreateAlarmHandler(intent.IntentHandler):
             if str_idx not in db:
                 allocated_idx = str_idx
                 break
-        
-        final_name = raw_name if raw_name else allocated_idx
+        is_persistent = reoccurring.strip().lower() != "once"
+        final_name = raw_name if raw_name else allocated_idx 
         db[allocated_idx] = {
             "name": final_name,
             "time": raw_time,
             "device_id": calling_device,
-            "persistent": False,
+            "persistent": is_persistent,
             "reoccurring": reoccurring,
             "ringing": False,
             "enabled": True
@@ -119,38 +119,14 @@ class CreateAlarmHandler(intent.IntentHandler):
 
 
 class CancelAlarmHandler(intent.IntentHandler):
-    """Handles silencing current ringing indicators."""
     def __init__(self):
-        self.intent_type = INTENT_CANCEL
+        self.intent_type = "CancelAlarmIntent"
 
     async def async_handle(self, user_intent: intent.Intent) -> intent.IntentResponse:
-        hass = user_intent.hass
-        db = hass.data[DOMAIN].get("alarms", {})
-        switches = hass.data[DOMAIN].get("switches", {})
-        master_sensor = hass.data[DOMAIN].get("master_sensor")
-        any_changed = False
-        
-        for idx, alarm in db.items():
-            if alarm.get("ringing"):
-                alarm["ringing"] = False
-                alarm["enabled"] = False
-                any_changed = True
-                if idx in switches:
-                    # Ensure we are calling the method correctly
-                    switches[idx].async_write_ha_state()
-        
-        if any_changed:
-            from . import save_alarms_to_disk
-            await hass.async_add_executor_job(save_alarms_to_disk, hass)
-            
-            if master_sensor:
-                # master_sensor likely needs the async version
-                await master_sensor.async_update_ha_state()
-        
+        await async_cancel_alarm_logic(user_intent.hass)
         response = user_intent.create_response()
         response.async_set_speech("Alarm canceled.")
         return response
-
 
 class DeleteAlarmHandler(intent.IntentHandler):
     """Handles deleting a specific alarm by name or time."""

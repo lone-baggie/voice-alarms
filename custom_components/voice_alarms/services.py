@@ -4,7 +4,7 @@ import voluptuous as vol
 
 from homeassistant.core import HomeAssistant, ServiceCall, ServiceResponse, SupportsResponse
 from homeassistant.helpers import config_validation as cv
-
+from .helpers import async_cancel_alarm_logic
 from .const import DOMAIN
 from .switch import async_register_new_switch
 
@@ -79,24 +79,9 @@ async def async_setup_services(hass: HomeAssistant) -> None:
         await async_register_new_switch(hass, allocated_idx)
         _LOGGER.info(f"Alarm {final_name} created successfully.")
 
+
     async def handle_cancel_alarm(call: ServiceCall):
-        db = hass.data[DOMAIN]["alarms"]
-        switches = hass.data[DOMAIN]["switches"]
-        any_changed = False
-        
-        for idx, alarm in db.items():
-            if alarm.get("ringing"):
-                alarm["ringing"] = False
-                alarm["enabled"] = False
-                any_changed = True
-                if idx in switches:
-                    switches[idx].async_write_ha_state()
-        
-        if any_changed:
-            from . import save_alarms_to_disk
-            await hass.async_add_executor_job(save_alarms_to_disk, hass)
-            if master_sensor := hass.data[DOMAIN].get("master_sensor"):
-                master_sensor.update_state()
+        await async_cancel_alarm_logic(call.hass)
                 
     async def handle_delete_alarm(call: ServiceCall):
         name = call.data.get("name")

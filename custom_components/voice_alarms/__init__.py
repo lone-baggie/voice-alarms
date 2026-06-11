@@ -49,7 +49,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     async_setup_intents(hass)
     await async_setup_services(hass)
 
-    # Set up platforms via config entry
     await hass.config_entries.async_forward_entry_setups(
         entry, ["binary_sensor", "sensor", "switch"]
     )
@@ -90,7 +89,7 @@ async def keep_alive_cron_loop(hass: HomeAssistant) -> None:
 
 
 async def async_run_engine_loop(hass: HomeAssistant, now_dt: datetime) -> None:
-    """Main background loop execution matrix mimicking a system crontab."""
+    """Main background loop execution matrix."""
     db = hass.data[DOMAIN]["alarms"]
     switches = hass.data[DOMAIN]["switches"]
     master_sensor = hass.data[DOMAIN].get("master_sensor")
@@ -102,33 +101,36 @@ async def async_run_engine_loop(hass: HomeAssistant, now_dt: datetime) -> None:
     current_day_name = local_now.strftime("%A").lower()
     is_weekday = local_now.weekday() in [0, 1, 2, 3, 4]
 
-    any_ringing = False
     items_to_delete = []
     state_changed = False
 
-# 1. Cleanup ringing, non-persistent alarms
+    # 1. Cleanup & Processing
     for idx, alarm in list(db.items()):
-        if alarm.get("ringing", False):
-            # Check the switch state; if it's still ON, we leave it alone.
-            # If the switch is OFF (or doesn't exist), we proceed to clean up.
-            is_switch_on = switches.get(idx) and switches.get(idx).is_on
+        # Handle alarms that are either ringing OR were 'canceled' but not yet cleaned up
+        is_switch_on = switches.get(idx) and switches.get(idx).is_on
+        start_ts = alarm.get("ringing_since")
+        
+        # Determine if we should process this alarm
+        # If it's ringing OR it was recently 'ringing' but turned off manually
+        if alarm.get("ringing") or (start_ts and not alarm.get("enabled")):
             
-            if is_switch_on:
-                # Alarm is still ringing and switch is ON, let it continue
-                continue
-            
-            # If we reach here, the alarm was ringing but the switch is now OFF
-            sched_type = str(alarm.get("reoccurring", "once")).strip().lower()
-            
-            if sched_type == "once" or not alarm.get("persistent", False):
-                items_to_delete.append(idx)
-            else:
-                # Persistent alarms just reset their state
-                alarm["ringing"] = False
-                alarm["enabled"] = True
-                state_changed = True
-                if idx in switches:
-                    switches[idx].async_write_ha_state()
+            duration = 0
+            if start_ts:
+                duration = (datetime.now() - datetime.fromisoformat(start_ts)).total_seconds()
+
+            # Logic: If switch is off (user cancelled or timeout)
+            if not is_switch_on or duration >= 60:
+                if not alarm.get("persistent", False):
+                    # Non-persistent: Delete
+                    items_to_delete.append(idx)
+                else:
+                    # Persistent: Reset
+                    alarm["ringing"] = False
+                    alarm["enabled"] = True
+                    alarm.pop("ringing_since", None)
+                    state_changed = True
+                    if idx in switches:
+                        switches[idx].async_write_ha_state()
 
     # 2. Perform robust deletion
     for idx in items_to_delete:
@@ -136,56 +138,39 @@ async def async_run_engine_loop(hass: HomeAssistant, now_dt: datetime) -> None:
             del db[idx]
             state_changed = True
         if idx in switches:
-            # Use the improved async_remove to cleanup Registry
             await switches[idx].async_remove()
             del switches[idx]
 
     # 3. Check for alarm triggers
     for idx, alarm in list(db.items()):
-        if not alarm.get("enabled", True):
-            continue
-        if alarm.get("ringing", False):
-            any_ringing = True
+        # Only trigger if enabled and NOT currently ringing
+        if not alarm.get("enabled", True) or alarm.get("ringing", False):
             continue
 
         try:
             time_parts = [int(x) for x in alarm["time"].split(":")[:2]]
-            alarm_hour = time_parts[0]
-            alarm_minute = time_parts[1]
+            time_matched = (current_hour == time_parts[0] and current_minute == time_parts[1])
         except Exception:
             continue
 
-        time_matched = (current_hour == alarm_hour and current_minute == alarm_minute)
         day_matched = False
         sched_type = str(alarm.get("reoccurring", "once")).strip().lower()
 
-        if sched_type in ["once", ""]:
-            day_matched = True
-        elif sched_type in ["everyday", "every day", "daily"]:
-            day_matched = True
-        elif sched_type == "weekday" and is_weekday:
-            day_matched = True
-        elif sched_type == current_day_name:
+        if sched_type in ["once", ""] or sched_type == current_day_name or \
+           (sched_type in ["everyday", "every day", "daily"]) or (sched_type == "weekday" and is_weekday):
             day_matched = True
 
         if time_matched and day_matched:
             alarm["ringing"] = True
             alarm["enabled"] = False
-            any_ringing = True
+            alarm["ringing_since"] = datetime.now().isoformat()
             state_changed = True
             if idx in switches:
                 switches[idx].async_write_ha_state()
 
-
     if state_changed:
-        # 1. Save data to disk using the executor
         await hass.async_add_executor_job(save_alarms_to_disk, hass)
-        
-        # 2. Update the master sensor (Binary Sensor)
         if master_sensor:
-            # FIX: Changed from 'master_sensor.update_state()' to 'await'
             await master_sensor.async_update_state()
-            
-        # 3. Update the list sensor (if you have one)
         if list_sensor:
             await list_sensor.async_update_state()
