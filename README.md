@@ -1,4 +1,10 @@
+
 # Voice Alarms
+
+![Version](https://img.shields.io/github/v/release/lone-baggie/voice_alarms)
+![License](https://img.shields.io/github/license/lone-baggie/voice_alarms)
+![HACS](https://img.shields.io/badge/HACS-Custom_orange.svg)
+![Home Assistant](https://img.shields.io/badge/Home%20Assistant-Compatible-blue.svg)
 
 Voice Alarms is an intent-based alarm system for Home Assistant voice satellites, designed to replicate the convenience of commercial assistants like Amazon Alexa or Google Home.
 
