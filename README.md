@@ -55,6 +55,8 @@ This sensor turns **ON** when an alarm triggers.
 
 ### 1. Installation
 
+[![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=lone-baggie&repository=voice_alarms&category=integration)
+
 Install via **HACS** as a "Custom Repository" (`https://github.com/lone-baggie/voice_alarms`), or manually copy the `custom_components/voice_alarms` directory into your `/config/custom_components/` directory and restart.
 
 ### 2. Custom Sentences
@@ -62,7 +64,7 @@ Install via **HACS** as a "Custom Repository" (`https://github.com/lone-baggie/v
 This integration requires a custom intent file to process your speech:
 
 1. Navigate to `/config/custom_sentences/en/` (create the directory if it doesn't exist).
-2. Save the [voice-alarms.yaml](https://github.com/lone-baggie/voice-alarms/blob/main/assets/voice-alarms.yaml) file into this folder.
+2. Save the [voice-alarms.yaml](https://github.com/lone-baggie/voice_alarms/blob/main/assets/voice-alarms.yaml) file into this folder.
 3. Reload your voice intents in Home Assistant.
 
 > **Warning:** Intent syntax is sensitive. Any accidental space or character change may break functionality.
@@ -73,7 +75,7 @@ This integration does not contain built-in sounds. Use the `binary_sensor.active
 
 ### Example: ESPHome Alarm Trigger
 
-If using an ESPHome device (M5Stack Atom Echo or HA Voice preview ), you can expose a local "alarm switch" via a [package](https://github.com/lone-baggie/voice-alarms/blob/main/assets/add_switch.yaml) .  This will expose the internal siren used for timers as a home assistant switch.
+If using an ESPHome device (M5Stack Atom Echo or HA Voice preview ), you can expose a local "alarm switch" via a [package](https://github.com/lone-baggie/voice_alarms/blob/main/assets/add_switch.yaml) .  This will expose the internal siren used for timers as a home assistant switch.
 
     packages:
       add_switch: !include packages/add_switch.yaml
@@ -95,8 +97,12 @@ You can obtain the device ID from the alarm switch attributes.
 
 ## Notes
 
-* **Cancel Alarms:**  Can be stopped  via Intent or action 'cancel alarm'. Turning binary_sensor.active_alarm to false or waiting 1 minute
+* **Ringing Alarms:**  When an alarm is trigged the switch that triggered the alarm will be turned off.  The active alarm sensor (binary_sensor.active_alarm) will be set  true and contain the switch attributes that triggered the alarm. If the cancel alarm intent or action calll is activated the active alarm sensor will be set false . After 1 minute the active alarm senor will be set false.  if the switch that triggerred the alarm was non-persistant it will be deleted, otherwise it will be turned back on.
+* **Alarm Behavior:** When created, alarm switches are turned **ON** (active). Turning a switch off disables the alarm.  One-off alarm switches that have been turned off will not be deleted, until turned back on and triggered.
+* **Alarm list:**  Only active alarm switches will be listed in the intent 'List Alarms' .   Actions 'voice_alarms.list_alarms' will list all alarm switches regardless of state.
+* **Deleting  Alarms:** 'Delete alarm' and 'delete all alarms' action or intent  will delete  alarm switches  regardless of state.
+* **Reboot Recovery:** If Home Assistant is rebooted, all alarm switches will be reset to **ON** (active).
 
-* **Switch Behavior:** When created, alarm switches are turned **ON** (active). Turning a switch off disables the alarm.  One-off alarms disabled will not be deleted.
-* **Reboot Recovery:** If Home Assistant is rebooted, all disabled alarm switches will be reset to **ON** (active).
-* **Daily Alarms:** One-off alarms are automatically deleted 1 minute after being triggered.
+
+
+ 
