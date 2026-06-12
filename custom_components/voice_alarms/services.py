@@ -79,7 +79,36 @@ async def async_setup_services(hass: HomeAssistant) -> None:
         await async_register_new_switch(hass, allocated_idx)
         _LOGGER.info(f"Alarm {final_name} created successfully.")
 
+    async def handle_alarm_on_off(call: ServiceCall):
+        name = call.data.get("name")
+        time = call.data.get("time")
+        state = call.data.get("state").lower()  # "on" or "off"
+        
+        db = hass.data[DOMAIN]["alarms"]
+        switches = hass.data[DOMAIN]["switches"]
+        target_idx = None
 
+        # Find the index for the alarm
+        for idx, alarm in db.items():
+            if name and alarm.get("name") == name:
+                target_idx = idx
+                break
+            if time and alarm.get("time") == time:
+                target_idx = idx
+                break
+        
+        if not target_idx or target_idx not in switches:
+            _LOGGER.warning(f"Could not find active alarm switch for: {name or time}")
+            return
+
+        # Execute the switch change
+        if state == "on":
+            await switches[target_idx].async_turn_on()
+        else:
+            await switches[target_idx].async_turn_off()
+            
+        _LOGGER.info(f"Alarm {target_idx} turned {state}.")
+ 
     async def handle_cancel_alarm(call: ServiceCall):
         await async_cancel_alarm_logic(call.hass)
                 
@@ -139,7 +168,14 @@ async def async_setup_services(hass: HomeAssistant) -> None:
             vol.Optional("reoccurring"): cv.string,
             vol.Optional("device_id"): cv.string,
         }))
-    
+
+    hass.services.async_register(DOMAIN, "alarm_on_off", handle_alarm_on_off,
+        schema=vol.Schema({
+            vol.Required("state"): vol.In(["on", "off"]),
+            vol.Optional("name"): cv.string,
+            vol.Optional("time"): cv.string,
+        }))
+
     hass.services.async_register(DOMAIN, SERVICE_CANCEL, handle_cancel_alarm)
     
     hass.services.async_register(DOMAIN, SERVICE_DELETE, handle_delete_alarm,

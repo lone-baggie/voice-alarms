@@ -43,6 +43,26 @@ delete_alarm:
       required: false
       example: "07:15"
 
+alarm_on_off:
+  name: Set Alarm State
+  description: Manually turn an alarm switch on or off.
+  fields:
+    state:
+      name: State
+      description: The desired state ("on" or "off").
+      required: true
+      example: "off"
+    name:
+      name: Identifier String Matcher
+      description: Alarm name.
+      required: false
+      example: "Wake up morning"
+    time:
+      name: Timestamp Matcher
+      description: Time.
+      required: false
+      example: "07:15"
+
 list_alarms:
   name: List Scheduled Alarms
   description: List Alarms.
