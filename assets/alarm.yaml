@@ -5,7 +5,17 @@ lists:
     wildcard: true
   alarm_name:
     wildcard: true
-
+  day:
+    values:
+      - "monday"
+      - "tuesday"
+      - "wednesday"
+      - "thursday"
+      - "friday" 
+      - "saturday"
+      - "sunday"
+      - "today"
+      - "tomorrow"
   reoccurring:
     values:
       - "monday"
@@ -40,12 +50,10 @@ intents:
   CreateAlarmIntent:
     data:
       - sentences:
-          - "(create|set|schedule) [an] alarm [called|named] {alarm_name} (at|for) {time} {reoccurring}"
-          - "(create|set|schedule) [an] alarm [called|named] {alarm_name} (at|for) {time}"
-          - "(create|set|schedule) {alarm_name} alarm (at|for) {time} {reoccurring}"
-          - "(create|set|schedule) {alarm_name} alarm (at|for) {time}"
-          - "(create|set|schedule) [an] alarm (at|for) {time} {reoccurring}"
-          - "(create|set|schedule) [an] alarm (at|for) {time}"
+          # Combines time and optional day/reoccurring slots
+          - "(create|set|schedule) [an] alarm [called|named] {alarm_name} (at|for) {time} [on {day}] [{reoccurring}]"
+          - "(create|set|schedule) {alarm_name} alarm (at|for) {time} [on {day}] [{reoccurring}]"
+          - "(create|set|schedule) [an] alarm (at|for) {time} [on {day}] [{reoccurring}]"
         slots:
           reoccurring: "once"
 
@@ -55,6 +63,7 @@ intents:
           - "list [active] alarms"
           - "what alarms [are] set"
           - "show me my alarms"
+          - "List alarm"
 
   CancelAlarmIntent:
     data:

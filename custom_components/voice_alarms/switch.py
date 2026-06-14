@@ -107,6 +107,7 @@ class AlarmAppSwitchEntity(SwitchEntity):
             "name": record.get("name", ""),
             "time": record.get("time"),
             "persistent": record.get("persistent"),
+            "target_day": record.get("target_day", "none"),
             "reoccurring": record.get("reoccurring"),
             "ringing": record.get("ringing")
         }

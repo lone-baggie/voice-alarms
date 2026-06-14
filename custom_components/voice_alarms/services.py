@@ -5,7 +5,12 @@ from homeassistant.core import HomeAssistant, ServiceCall, ServiceResponse, Supp
 from homeassistant.helpers import config_validation as cv
 
 from .const import DOMAIN
-from .alarm_manager import async_create_alarm, async_delete_alarm
+from .alarm_manager import (
+    async_create_alarm, 
+    async_delete_alarm, 
+    async_delete_all_alarms, 
+    async_get_all_alarms
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -13,12 +18,14 @@ _LOGGER = logging.getLogger(__name__)
 
 async def handle_create_alarm(call: ServiceCall):
     """Create an alarm using centralized manager."""
-    time_str = call.data["time"]
-    name = call.data.get("name")
-    reoccurring = call.data.get("reoccurring", "once")
-    device_id = call.data.get("device_id", "")
-    
-    success, message = await async_create_alarm(call.hass, time_str, reoccurring, name, device_id)
+    success, message = await async_create_alarm(
+        call.hass, 
+        call.data["time"], 
+        call.data.get("reoccurring", "once"), 
+        call.data.get("name"), 
+        call.data.get("device_id", ""),
+        target_day=call.data.get("target_day") # Added target_day
+    )
     if not success:
         _LOGGER.warning(f"Failed to create alarm: {message}")
     else:
@@ -50,34 +57,18 @@ async def handle_cancel_alarm(call: ServiceCall):
         
 async def handle_delete_alarm(call: ServiceCall):
     """Delete an alarm using centralized manager."""
-    name = call.data.get("name")
-    time = call.data.get("time")
-    if await async_delete_alarm(call.hass, name=name, time=time):
+    if await async_delete_alarm(call.hass, name=call.data.get("name"), time=call.data.get("time")):
         _LOGGER.info("Alarm deleted.")
     else:
         _LOGGER.warning("Could not find alarm to delete.")
             
 async def handle_list_alarms(call: ServiceCall) -> ServiceResponse:
     """List all alarms."""
-    db = call.hass.data[DOMAIN]["alarms"]
-    return {"alarms": list(db.values())}
+    return {"alarms": async_get_all_alarms(call.hass)}
 
 async def handle_delete_all_alarms(call: ServiceCall):
-    """Delete all alarms and clean up state."""
-    db = call.hass.data[DOMAIN]["alarms"]
-    switches = call.hass.data[DOMAIN].get("switches", {})
-    
-    for idx in list(switches.keys()):
-        await switches[idx].async_remove()
-    
-    switches.clear()
-    db.clear()
-    
-    from . import save_alarms_to_disk
-    await call.hass.async_add_executor_job(save_alarms_to_disk, call.hass)
-    
-    if list_sensor := call.hass.data[DOMAIN].get("list_sensor"):
-        await list_sensor.async_update_ha_state()
+    """Delete all alarms using centralized manager."""
+    await async_delete_all_alarms(call.hass)
     _LOGGER.info("All alarms deleted.")
 
 # --- Registration Function ---
@@ -91,6 +82,7 @@ async def async_setup_services(hass: HomeAssistant) -> None:
             vol.Optional("name"): cv.string,
             vol.Optional("reoccurring"): cv.string,
             vol.Optional("device_id"): cv.string,
+            vol.Optional("target_day"): cv.string, # Added target_day schema
         }))
 
     hass.services.async_register(DOMAIN, "alarm_on_off", handle_alarm_on_off,
