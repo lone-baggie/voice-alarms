@@ -18,12 +18,12 @@ Based on the [HA-Alarms-and-Reminders](https://github.com/omaramin-2000/HA-Alarm
 
 ## Voice Commands & Actions
 
-| Intent                                              | Description                                        |
-|:--------------------------------------------------- |:-------------------------------------------------- |
-| **Create alarm [at \<time\>] [every \<reoccurs\>]** | Creates one-off or recurring alarms.               |
-| **Create alarm called \<name\> [at \<time\>]...**   | Creates a named alarm.                             |
-| **Delete alarm \<name\> / \<time\>**                | Removes an alarm by name or time.                  |
-| **List alarms / Cancel alarm**                      | Lists current alarms or cancels the current alarm. |
+| Intent                                                     | Description                                                                                                                                                                                |
+|:---------------------------------------------------------- |:------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **create alarm** {name} **at** {time} **on / every** {day} | Creates alarm if **on** single one off alarm. If **every** Recurring by day,weekday or every day. if **on** omitted will assume today. If **name** omitted next alarm number will be used. |
+| **delete (all) alarm(s)**  {name} **at** {time }           | delete  an alarm by name or time or all alarms.                                                                                                                                            |
+| **List alarms**                                            | Lists current active alarms alarms                                                                                                                                                         |
+| **Cancel alarm**                                           | Cancels ringing  alarm                                                                                                                                                                     |
 
 **Available Actions:** 
 
@@ -35,19 +35,33 @@ Based on the [HA-Alarms-and-Reminders](https://github.com/omaramin-2000/HA-Alarm
 
 
 
+**Examples**
+
+create alarm at ten thirty am 
+
+create alarm roast at two thirty pm on sunday
+
+create alarm dinner at six pm  every weekday
+
+delete alarm dinner
+
+delete alarm at 10 pm 
+
+
+
 ## Entity Details
 
 ### Switches (switch.1 - switch.99)
 
 Each alarm is represented as a switch. Turning it **OFF** disables it; turning it **ON** enables it.
 
-* **Attributes:** `state`, `alarm_id`, `device_id`, `name`, `time`, `persistent`, `reoccurring`, `ringing`.
+* **Attributes:** `state`, `alarm_id`, `device_id`, `name`, `time`, `persistent`, `target day reoccurring`, `ringing`.
 
 ### Binary Sensor (binary_sensor.active_alarm)
 
 This sensor turns **ON** when an alarm triggers.
 
-* **Attributes:** Matches the active alarm's attributes (Device ID, Name, Time, etc.).
+- **Attributes:** `state, device_id,alarm_ID,name,media player`
 
 ### Sensor (sensor.list_alarms)
 
@@ -67,7 +81,7 @@ Install via **HACS** as a "Custom Repository" (`https://github.com/lone-baggie/v
 This integration requires a custom intent file to process your speech:
 
 1. Navigate to `/config/custom_sentences/en/` (create the directory if it doesn't exist).
-2. Save the [voice-alarms.yaml](https://github.com/lone-baggie/voice_alarms/blob/main/assets/voice-alarms.yaml) file into this folder.
+2. Save the [voice-alarms.yaml](https://github.com/lone-baggie/voice_alarms/blob/main/assets/alarms.yaml) file into this folder.
 3. Reload your voice intents in Home Assistant.
 
 > **Warning:** Intent syntax is sensitive. Any accidental space or character change may break functionality.
