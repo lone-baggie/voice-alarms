@@ -7,7 +7,9 @@
 
 Voice Alarms is an intent-based alarm system for Home Assistant voice satellites, designed to replicate the convenience of commercial assistants like Amazon Alexa or Google Home.
 
-Based on the [HA-Alarms-and-Reminders](https://github.com/omaramin-2000/HA-Alarms-and-Reminders) framework, this integration allows you to create, delete, and list alarms using simple voice commands or Home Assistant actions.
+Based on the [HA-Alarms-and-Reminders](https://github.com/omaramin-2000/HA-Alarms-and-Reminders) and [HA-Alarm-Clock](https://github.com/nirnachmani/HA-Alarm-Clock/tree/main) 
+
+This integration allows you to create, delete, and list alarms using simple voice commands or Home Assistant actions.
 
 ## Features
 
@@ -119,3 +121,7 @@ You can obtain the device ID from the alarm switch attributes.
 * **Deleting  Alarms:** 'Delete alarm' and 'delete all alarms' action or intent  will delete  alarm switches  regardless of state.
 * **Changing Alarm state:**  Use the the action voice_alarms_on_off in your automations to change alarm state as you cannot guarantee the switch ID name.
 * **Reboot Recovery:** If Home Assistant is rebooted, all alarm switches will be reset to **ON** (active).
+
+## Attribution
+
+Based on [HA-Alarms-and-Reminders](https://github.com/omaramin-2000/HA-Alarms-and-Reminders) by  [omaramin-2000](https://github.com/omaramin-2000) and [HA-Alarm-Clock](https://github.com/nirnachmani/HA-Alarm-Clock/tree/main) by @[nirnachmani](https://github.com/nirnachmani)  (thank you)
